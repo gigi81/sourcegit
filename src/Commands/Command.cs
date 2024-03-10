@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace SourceGit.Commands {
     public class Command {
@@ -24,6 +25,8 @@ namespace SourceGit.Commands {
         public bool RaiseError { get; set; } = true;
         public bool TraitErrorAsOutput { get; set; } = false;
 
+        public ILogger Logger { get; set; } = null;
+
         public bool Exec() {
             var start = new ProcessStartInfo();
             start.FileName = Native.OS.GitInstallPath;
@@ -35,7 +38,8 @@ namespace SourceGit.Commands {
             start.StandardOutputEncoding = Encoding.UTF8;
             start.StandardErrorEncoding = Encoding.UTF8;
 
-            if (!string.IsNullOrEmpty(WorkingDirectory)) start.WorkingDirectory = WorkingDirectory;
+            if (!string.IsNullOrEmpty(WorkingDirectory))
+                start.WorkingDirectory = WorkingDirectory;
 
             var errs = new List<string>();
             var proc = new Process() { StartInfo = start };
@@ -46,11 +50,13 @@ namespace SourceGit.Commands {
                     isCancelled = true;
                     proc.CancelErrorRead();
                     proc.CancelOutputRead();
-                    if (!proc.HasExited) proc.Kill(true);
+                    if (!proc.HasExited)
+                        proc.Kill(true);
                     return;
                 }
 
-                if (e.Data != null) OnReadline(e.Data);
+                if (e.Data != null)
+                    OnReadline(e.Data);
             };
 
             proc.ErrorDataReceived += (_, e) => {
@@ -58,12 +64,15 @@ namespace SourceGit.Commands {
                     isCancelled = true;
                     proc.CancelErrorRead();
                     proc.CancelOutputRead();
-                    if (!proc.HasExited) proc.Kill(true);
+                    if (!proc.HasExited)
+                        proc.Kill(true);
                     return;
                 }
 
-                if (string.IsNullOrEmpty(e.Data)) return;
-                if (TraitErrorAsOutput) OnReadline(e.Data);
+                if (string.IsNullOrEmpty(e.Data))
+                    return;
+                if (TraitErrorAsOutput)
+                    OnReadline(e.Data);
 
                 // Ignore progress messages
                 if (e.Data.StartsWith("remote: Enumerating objects:", StringComparison.Ordinal)) return;
@@ -75,6 +84,7 @@ namespace SourceGit.Commands {
             };
 
             try {
+                
                 proc.Start();
             } catch (Exception e) {
                 if (RaiseError) {

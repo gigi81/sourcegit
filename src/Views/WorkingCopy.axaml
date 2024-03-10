@@ -73,6 +73,7 @@
                   VerticalScrollBarVisibility="Auto"
                   KeyDown="OnUnstagedListKeyDown"
                   ContextRequested="OnUnstagedListContextRequested"
+                  DoubleTapped="OnUnstagedListDoubleTapped"
                   IsVisible="{Binding Source={x:Static vm:Preference.Instance}, Path=UnstagedChangeViewMode, Converter={x:Static c:ChangeViewModeConverters.IsList}}">
           <DataGrid.Columns>
             <DataGridTemplateColumn Header="ICON">

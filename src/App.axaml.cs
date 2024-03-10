@@ -10,36 +10,44 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using Avalonia.Logging;
 
 namespace SourceGit {
-    public partial class App : Application {
-
+    public partial class App : Application
+    {
+        private static string AppDataFolder =>
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SourceGit");
+        
         [STAThread]
         public static void Main(string[] args) {
             try {
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-            } catch (Exception ex) {
-                var builder = new StringBuilder();
-                builder.Append("Crash: ");
-                builder.Append(ex.Message);
-                builder.Append("\n\n");
-                builder.Append("----------------------------\n");
-                builder.Append($"Version: {Assembly.GetExecutingAssembly().GetName().Version}\n");
-                builder.Append($"OS: {Environment.OSVersion.ToString()}\n");
-                builder.Append($"Framework: {AppDomain.CurrentDomain.SetupInformation.TargetFrameworkName}\n");
-                builder.Append($"Source: {ex.Source}\n");
-                builder.Append($"---------------------------\n\n");
-                builder.Append(ex.StackTrace);
-
-                var time = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-                var file = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "SourceGit",
-                    $"crash_{time}.log");
-                File.WriteAllText(file, builder.ToString());
+            } catch (Exception ex)
+            {
+                LogStartupException(ex);
             } 
         }
 
-        public static AppBuilder BuildAvaloniaApp() {
+        private static void LogStartupException(Exception ex)
+        {
+            var builder = new StringBuilder();
+            builder.Append("Crash: ");
+            builder.Append(ex.Message);
+            builder.Append("\n\n");
+            builder.Append("----------------------------\n");
+            builder.Append($"Version: {Assembly.GetExecutingAssembly().GetName().Version}\n");
+            builder.Append($"OS: {Environment.OSVersion.ToString()}\n");
+            builder.Append($"Framework: {AppDomain.CurrentDomain.SetupInformation.TargetFrameworkName}\n");
+            builder.Append($"Source: {ex.Source}\n");
+            builder.Append($"---------------------------\n\n");
+            builder.Append(ex.StackTrace);
+
+            var time = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            var file = Path.Combine(AppDataFolder, $"crash_{time}.log");
+            File.WriteAllText(file, builder.ToString());
+        }
+
+        private static AppBuilder BuildAvaloniaApp() {
             var builder = AppBuilder.Configure<App>();
             builder.UsePlatformDetect();
             builder.ConfigureFonts(manager => {
@@ -69,7 +77,7 @@ namespace SourceGit {
                 });
             }
             
-            builder.LogToTrace();
+            builder.LogToTrace(LogEventLevel.Debug);
             return builder;
         }
 
@@ -102,7 +110,11 @@ namespace SourceGit {
             app._activeLocale = targetLocale;
         }
 
-        public static void SetTheme(string theme) {
+        public static void SetTheme(string theme)
+        {
+            if (App.Current == null)
+                return;
+            
             if (theme.Equals("Light", StringComparison.OrdinalIgnoreCase)) {
                 App.Current.RequestedThemeVariant = ThemeVariant.Light;
             } else if (theme.Equals("Dark", StringComparison.OrdinalIgnoreCase)) {
@@ -113,16 +125,22 @@ namespace SourceGit {
         }
 
         public static async void CopyText(string data) {
+            if (App.Current == null)
+                return;
+
             if (Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-                if (desktop.MainWindow.Clipboard is { } clipbord) {
-                    await clipbord.SetTextAsync(data);
+                if (desktop.MainWindow?.Clipboard is { } clipboard) {
+                    await clipboard.SetTextAsync(data);
                 }
             }
         }
 
-        public static string Text(string key, params object[] args) {
-            var fmt = Current.FindResource($"Text.{key}") as string;
-            if (string.IsNullOrWhiteSpace(fmt)) return $"Text.{key}";
+        public static string Text(string key, params object[] args)
+        {
+            var fmt = Current?.FindResource($"Text.{key}") as string;
+            if (string.IsNullOrWhiteSpace(fmt))
+                return $"Text.{key}";
+
             return string.Format(fmt, args);
         }
 
@@ -131,20 +149,20 @@ namespace SourceGit {
             icon.Width = 12;
             icon.Height = 12;
             icon.Stretch = Stretch.Uniform;
-            icon.Data = Current.FindResource(key) as StreamGeometry;
+            icon.Data = Current?.FindResource(key) as StreamGeometry;
             return icon;
         }
 
         public static TopLevel GetTopLevel() {
-            if (Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+            if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
                 return desktop.MainWindow;
             }
             return null;
         }
 
         public static void Quit() {
-            if (Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-                desktop.MainWindow.Close();
+            if (Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
+                desktop.MainWindow?.Close();
                 desktop.Shutdown();
             }
         }

@@ -148,6 +148,22 @@ namespace SourceGit.Views {
             e.Handled = true;
         }
 
+        private void OnUnstagedListDoubleTapped(object sender, TappedEventArgs e)
+        {
+            var datagrid = sender as DataGrid;
+            if (datagrid.SelectedItems.Count > 0 && DataContext is ViewModels.WorkingCopy vm) {
+                List<Models.Change> selected = new List<Models.Change>();
+                foreach (var item in datagrid.SelectedItems) {
+                    if (item is Models.Change change) selected.Add(change);
+                }
+
+                if(selected.Count > 0)
+                    vm.StageChanges(selected);
+            }
+
+            e.Handled = true;
+        }
+
         private void OnUnstagedListContextRequested(object sender, ContextRequestedEventArgs e) {
             var datagrid = sender as DataGrid;
             if (datagrid.SelectedItems.Count > 0 && DataContext is ViewModels.WorkingCopy vm) {
