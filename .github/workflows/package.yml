@@ -21,7 +21,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Download inno setup
-        uses: @pwall2222/inno-setup-download
+        uses: pwall2222/inno-setup-download
       - name: Install pupnet
         run: dotnet tool install --global KuiperZone.PupNet
       - name: Package
