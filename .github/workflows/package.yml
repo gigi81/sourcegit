@@ -6,9 +6,10 @@ on:
         description: Source Git package version
         required: true
         type: string
+        
 jobs:
   windows-setup:
-    name: Package portable Windows app
+    name: Package setup Windows app
     runs-on: windows-latest
     strategy:
       matrix:
@@ -21,7 +22,7 @@ jobs:
         with:
           dotnet-version: 8.0.x
       - name: Download inno setup
-        uses: pwall2222/inno-setup-download@v0.0.6      
+        uses: pwall2222/inno-setup-download@v0
       - name: Install pupnet
         run: dotnet tool install --global KuiperZone.PupNet
       - name: Package
