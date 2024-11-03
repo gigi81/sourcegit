@@ -7,6 +7,31 @@ on:
         required: true
         type: string
 jobs:
+  windows-setup:
+    name: Package portable Windows app
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        runtime: [win-x64, win-arm64]
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Download inno setup
+        uses: @pwall2222/inno-setup-download
+      - name: Install pupnet
+        run: dotnet tool install --global KuiperZone.PupNet
+      - name: Package
+        run: pupnet --runtime ${{ matrix.runtime }} --kind setup --app-version ${{ inputs.version }}
+      - name: Upload package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: setup.${{ matrix.runtime }}
+          path: Deploy/bin/*.exe
+
   windows-portable:
     name: Package portable Windows app
     runs-on: ubuntu-latest
@@ -35,6 +60,7 @@ jobs:
         uses: geekyeggo/delete-artifact@v5
         with:
           name: sourcegit.${{ matrix.runtime }}
+          
   osx-app:
     name: Package OSX app
     runs-on: macos-latest
@@ -66,6 +92,7 @@ jobs:
         uses: geekyeggo/delete-artifact@v5
         with:
           name: sourcegit.${{ matrix.runtime }}
+          
   linux:
     name: Package Linux
     runs-on: ubuntu-latest
