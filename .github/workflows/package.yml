@@ -23,38 +23,15 @@ jobs:
           dotnet-version: 8.0.x
       - name: Install pupnet
         run: dotnet tool install --global KuiperZone.PupNet
-      - name: Package
-        run: pupnet --runtime ${{ matrix.runtime }} --kind setup --app-version ${{ inputs.version }}
-      - name: Upload package artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: setup.${{ matrix.runtime }}
-          path: Deploy/bin/*.exe
-
-  windows-portable:
-    name: Package portable Windows app
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        runtime: [win-x64, win-arm64]
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
-      - name: Download build
-        uses: actions/download-artifact@v4
-        with:
-          name: sourcegit.${{ matrix.runtime }}
-          path: build/SourceGit
-      - name: Package
-        env:
-          VERSION: ${{ inputs.version }}
-          RUNTIME: ${{ matrix.runtime }}
-        run: ./build/scripts/package.windows-portable.sh
+      - name: Package setup
+        run: pupnet --runtime ${{ matrix.runtime }} --kind setup -v ${{ inputs.version }} -o sourcegit-${{ inputs.version }}-${{ matrix.runtime }}-setup.exe
+      - name: Package zip
+        run: pupnet --runtime ${{ matrix.runtime }} --kind zip -v ${{ inputs.version }} -o sourcegit-${{ inputs.version }}-${{ matrix.runtime }}-portable.zip
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
         with:
           name: package.${{ matrix.runtime }}
-          path: build/sourcegit_*.zip
+          path: packages/*
       - name: Delete temp artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
